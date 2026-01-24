@@ -1,21 +1,25 @@
 import requests
 import pandas as pd
 import pyodbc
+from datetime import datetime
 
 css_styles = """.my-table-style {background-color: lightgrey;font-size:x-small;text-align-last:start;}"""
 
 class stock_data:
-    def __init__(self, company, currentPrice):
+    def __init__(self):
+        self.company = None
+        self.currentPrice = None
+        self.server = 'sqldemovin.database.windows.net'
+        self.database = 'projects'
+        self.username = 'abc'
+        self.password = 'Venkatesh08!'
+        self.connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password}'
+
+
+    def get_data_from_api(self, company, currentPrice):
+        my_dict = {}
         self.company = company
         self.currentPrice = currentPrice
-
-    def get_data_from_api(self):
-        my_dict = {}
-        server = 'sqldemovin.database.windows.net'
-        database = 'projects'
-        username = 'abc'
-        password = 'Venkatesh08!'
-        connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
         for com in self.company:
             url = "https://stock.indianapi.in/stock"
             querystring = {"name" :com}
@@ -23,26 +27,34 @@ class stock_data:
             response = requests.get(url, headers=headers, params=querystring)
             df = response.json()
             my_dict.update({com: df.get(self.currentPrice)})
+            my_dict[com]['industry'] = df.get('industry')
         df = pd.DataFrame(my_dict).T
         df.index.name = 'Company'
         df = df.reset_index()
         try:
-            conn = pyodbc.connect(connection_string)
+            conn = pyodbc.connect(self.connection_string)
             cursor = conn.cursor()
             query = f"IF OBJECT_ID('stock_price', 'U') IS NOT NULL SELECT 1 ELSE SELECT 0"
             result = cursor.execute(query).fetchone()[0]
+            value_to_append = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             if result == 1:
                 cursor.execute(query)
                 conn.commit()
                 data = df.values.tolist()
+                value_to_append = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = [inner_list + [value_to_append] for inner_list in data]
                 cursor.execute('DELETE FROM stock_price')
-                cursor.executemany('''INSERT INTO stock_price (Company, BSE, NSE) VALUES (?, ?, ?)''', data)
+                print(data)
+                cursor.executemany('''INSERT INTO stock_price (Company, BSE, NSE, industry, created_at) VALUES (?, ?, ?, ?, ?)''', data)
+
             else:
-                query = '''CREATE TABLE stock_price ( Company NVARCHAR(255), BSE     NVARCHAR(255), NSE     NVARCHAR(255) )'''
+                query = '''CREATE TABLE stock_price ( Company NVARCHAR(255), BSE NVARCHAR(255), NSE NVARCHAR(255), industry NVARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP )'''
                 cursor.execute(query)
                 conn.commit()
                 data = df.values.tolist()
-                cursor.executemany('''INSERT INTO stock_price (Company, BSE, NSE) VALUES (?, ?, ?)''', data)
+                value_to_append = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = [inner_list + [value_to_append] for inner_list in data]
+                cursor.executemany('''INSERT INTO stock_price (Company, BSE, NSE, industry, created_at) VALUES (?, ?, ?, ?, ?)''', data)
             # html_table = df.to_html(classes='my-table-style')
             # html_with_style = f'<style>{css_styles}</style>\n{html_table}'
             conn.commit()
@@ -55,4 +67,24 @@ class stock_data:
 
 
     def get_data_from_sql(self):
-        print(f"This car is a {self.company} {self.brand} {self.model} with {self.mileage} miles.")
+        conn = pyodbc.connect(self.connection_string)
+        cursor = conn.cursor()
+        query = 'select * from [dbo].[stock_price]'
+        cursor.execute(query)
+        # Fetch results
+        rows = cursor.fetchall()
+        conn.close()
+        print('connection closed :' + str(conn.closed))
+        col_list = []
+        for i in range(len(cursor.description)):
+            col_list.append(cursor.description[i][0])
+
+        f = []
+        for i in rows:
+            asd = tuple(j for j in i)
+            f.append(asd)
+
+        final_df = pd.DataFrame(f, columns=col_list)
+        html_table = final_df.to_html(classes='my-table-style')
+        html_with_style = f'<style>{css_styles}</style>\n{html_table}'
+        return html_with_style
