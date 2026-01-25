@@ -10,7 +10,7 @@ def index():
 @app.route('/update_table', methods=['POST'])
 def update_table():
     my_com = stock_data()
-    my_com.get_data_from_api(["Tata Steel", "Reliance"], 'currentPrice') ##["Tata Steel", "Reliance", "Mukka Proteins", "Tech Mahindra"]
+    my_com.get_data_from_api(["Tata Steel", "Reliance", "Mukka Proteins"], 'currentPrice') ##["Tata Steel", "Reliance", "Mukka Proteins", "Tech Mahindra"]
 
     return jsonify({'message': 'Data updated in DB'})
 
