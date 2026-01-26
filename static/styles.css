@@ -4,3 +4,57 @@ body {
     padding: 1vh;
 }
 
+
+#stock-table {
+    border-collapse: collapse;
+    border: 1px solid #ddd; /* add this */
+    background-color: lightgrey;
+    font-size:smaller;
+    text-align-last:start;
+    font-family:math;
+    color:darkslategray;
+}
+
+#stock-table td, #stock-table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+/*
+.dropbtn {
+  background-color: #f0f0f0;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  padding: 12px 16px;
+  z-index: 1;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content a {
+  text-decoration: none;
+  display: block;
+  color: #333;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+*/
+
+
